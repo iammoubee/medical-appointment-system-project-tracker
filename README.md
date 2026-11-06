@@ -1,126 +1,85 @@
 # Medical Appointment System Project Tracker
 
-A Java Servlet MVC application for tracking the planned Medical Appointment System delivery.
-Task changes are persisted in MySQL; project completion is calculated from task weights and
-partial completion, and the Gantt chart reads the same tasks from the JSON endpoint.
+A Java Servlet MVC-based web application designed to track the development progress of a Medical Appointment System using a Work Completion Calculator and an interactive Gantt Chart.
 
-## Architecture
+## Features
 
-- **Views:** JSP pages, responsive Bootstrap layout, CSS, and browser-side JavaScript.
-- **Controllers:** `DashboardServlet` builds the dashboard; `TaskServlet` provides JSON CRUD at
-  `/api/tasks` and `/api/tasks/{id}`.
-- **Service:** `ProjectService` computes weighted overall and remaining progress.
-- **DAO:** `ProjectDao` and `TaskDao` use JDBC prepared statements for MySQL persistence.
-- **Models:** immutable project, task, and project summary records.
-- **Database configuration:** `Database` reads the `MEDICAL_TRACKER_DB_*` environment variables.
-- **Visualization:** Frappe Gantt supports weekly/monthly views, dependency links, progress,
-  milestones, date dragging, and a today marker.
+- **Project Dashboard:** Overview of total, completed, pending, and ongoing tasks.
+- **Work Completion Calculator:** Calculates overall project progress and remaining work using weighted task completion.
+- **Gantt Chart:** Visualizes task schedules, durations, deadlines, dependencies, and progress.
+- **Task Management:** Add, update, view, and delete project tasks.
+- **MySQL Integration:** Stores project and task information using JDBC.
+- **Progress Reports:** Displays project statistics and delayed tasks.
 
-## Project structure
+## Screenshots
+
+### 1. Project Dashboard
+<img width="1482" height="847" alt="Screenshot 2026-11-06 213235" src="https://github.com/user-attachments/assets/fcf7948d-57d5-43eb-9d3d-1fa59b724a08" />
+
+### 2. Gantt Chart
+
+<img width="1475" height="845" alt="Screenshot 2026-11-06 213302" src="https://github.com/user-attachments/assets/2fc96941-5d04-48f8-b29e-781aa6110591" />
+
+### 3. Task Management
+<img width="1472" height="827" alt="Screenshot 2026-11-06 213320" src="https://github.com/user-attachments/assets/d3e7c26e-96c9-42b3-acc4-c022bd7639a8" />
+
+
+## Technologies Used
+
+- Java (JDK 17+)
+- Java Servlet & JSP
+- MySQL 8
+- JDBC
+- HTML, CSS, JavaScript
+- Bootstrap 5
+- Frappe Gantt
+- Apache Maven
+- Apache Tomcat 11
+
+## Project Structure
 
 ```text
 medical-project-tracker/
-├── database/schema.sql
+├── database/
+├── src/
+│   ├── main/java/
+│   └── main/webapp/
 ├── pom.xml
-└── src/
-    ├── main/java/com/medicaltracker/
-    │   ├── controller/
-    │   ├── dao/
-    │   ├── model/
-    │   ├── service/
-    │   └── util/
-    ├── main/webapp/
-    │   ├── assets/css/dashboard.css
-    │   ├── assets/js/dashboard.js
-    │   ├── WEB-INF/views/
-    │   └── index.jsp
-    └── test/java/com/medicaltracker/service/
+└── README.md
 ```
 
-## Requirements
-
-- JDK 17 or newer (required by Tomcat 11)
-- Apache Maven
-- Apache Tomcat 11
-- MySQL 8
-
-## Database setup
-
-The included idempotent script creates the database, project, and 16 weighted sample tasks.
-From the project root, run it with a MySQL account allowed to create the database:
-
-```powershell
-$mysqlHome = "C:\Program Files\MySQL\MySQL Server 8.4"
-cmd.exe /c "`"$mysqlHome\bin\mysql.exe`" --protocol=TCP --host=127.0.0.1 --port=3306 --user=root < database\schema.sql"
-```
-
-For a new local MySQL installation that does not already have a configured service, initialize
-its data directory once, then start `mysqld` in a separate PowerShell window and leave that
-window open while developing:
-
-```powershell
-$mysqlHome = "C:\Program Files\MySQL\MySQL Server 8.4"
-$dataDir = Join-Path $env:LOCALAPPDATA "MedicalTrackerMySQL\data"
-New-Item -ItemType Directory -Force -Path $dataDir
-& "$mysqlHome\bin\mysqld.exe" "--basedir=$mysqlHome" "--datadir=$dataDir" --initialize-insecure --console
-```
-
-Start the initialized server in a separate terminal (skip initialization if you already have
-a data directory):
-
-```powershell
-$mysqlHome = "C:\Program Files\MySQL\MySQL Server 8.4"
-$dataDir = Join-Path $env:LOCALAPPDATA "MedicalTrackerMySQL\data"
-& "$mysqlHome\bin\mysqld.exe" "--basedir=$mysqlHome" "--datadir=$dataDir" --bind-address=127.0.0.1 --port=3306 --console
-```
-
-`--initialize-insecure` creates a root account without a password for local development.
-Keep this server bound to localhost; use a password-protected database account outside local
-development and provide its credentials with the environment variables below.
-
-By default the application connects to:
+## Progress Calculation
 
 ```text
-jdbc:mysql://localhost:3306/medical_project_tracker
+Overall Progress =
+(Sum of Weight × Completion Percentage / 100)
+÷ Total Task Weight × 100
+
+Remaining Work = 100 - Overall Progress
 ```
 
-Set credentials in the environment before launching Tomcat. Example for the current
-PowerShell window:
+## Setup & Run
 
-```powershell
-$env:MEDICAL_TRACKER_DB_URL = "jdbc:mysql://localhost:3306/medical_project_tracker?serverTimezone=UTC"
-$env:MEDICAL_TRACKER_DB_USER = "root"
-$env:MEDICAL_TRACKER_DB_PASSWORD = "your-local-password"
-```
+1. Clone or download the repository.
+2. Create the MySQL database using `database/schema.sql`.
+3. Configure database credentials using environment variables.
+4. Build the project:
 
-Do not put real database credentials in source control. The schema seeds the project and its
-16 weighted tasks; weights sum to 100 for the initial plan, but can be changed independently.
-
-## Build and test
-
-From the project root:
-
-```powershell
+```bash
 mvn clean test package
 ```
 
-## Run on Tomcat 11
+5. Deploy the generated WAR file to Apache Tomcat 11.
+6. Open:
 
-Copy the WAR to Tomcat and start the server:
-
-```powershell
-Copy-Item target\medical-project-tracker.war "$env:CATALINA_HOME\webapps\"
-& "$env:CATALINA_HOME\bin\startup.bat"
+```text
+http://localhost:8080/medical-project-tracker/
 ```
 
-Open `http://localhost:8080/medical-project-tracker/`. In VS Code, install the Java Extension
-Pack and Community Server Connectors, add your Tomcat 11 installation, then deploy
-`target\medical-project-tracker.war` from the Servers view. The app expects the schema and
-MySQL service to be available when its dashboard loads.
+## Project Purpose
 
-## Weighted calculation
+This project demonstrates practical Software Engineering Project Management concepts by monitoring project completion, managing tasks, and visualizing development schedules through an interactive Gantt Chart.
 
-`overall = sum(weight × completion / 100) / sum(weight) × 100`
+---
 
-For weights `20, 25, 15, 20, 20` and completion `100, 100, 50, 0, 0`, overall completion is
-`52.5%`, and remaining work is `47.5%`. A zero total weight is treated as 0% complete.
+**Developed as an academic project for Software Engineering Project Management (SEPM).**
